@@ -1,17 +1,21 @@
 name: Supabase Keep Alive - GdMem & YouAndMe
-
 on:
   schedule:
-    - cron: '0 1 * * 1'
+    - cron: '0 1 */3 * *'   # 3일마다
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Ping GdMem DB
         run: |
-          RESPONSE=$(curl -s \
+          RESPONSE=$(curl -sf \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             "${{ secrets.SUPABASE_URL }}/rest/v1/62-members?select=count&limit=1")
@@ -20,9 +24,18 @@ jobs:
 
       - name: Ping YouAndMe DB
         run: |
-          RESPONSE=$(curl -s \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/rooms?select=count&limit=1")
+          RESPONSE=$(curl -sf \
+            -H "apikey: ${{ secrets.YOUANDME_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.YOUANDME_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.YOUANDME_SUPABASE_URL }}/rest/v1/rooms?select=count&limit=1")
           echo "Response: $RESPONSE"
           echo "✅ YouAndMe DB Ping 완료"
+
+      - name: Keep repo active (60일 비활성화 방지)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          date > .last-ping
+          git add .last-ping
+          git commit -m "keep-alive: $(date -u +%Y-%m-%d)" || echo "no changes"
+          git push
