@@ -13,15 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ping GdMem DB
-        run: |
-          RESPONSE=$(curl -sf \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/62-members?select=count&limit=1")
-          echo "Response: $RESPONSE"
-          echo "✅ GdMem DB Ping 완료"
-
       - name: Ping YouAndMe DB
         run: |
           RESPONSE=$(curl -sf \
